@@ -246,7 +246,8 @@ local function createTableStatement(type, tbl, schema, database, db, dbms)
     local buf = nil
     type = type:gsub("%s+", "")
     for _, w in pairs(UI.windows.editors) do
-        for _, b in pairs(UI.buffers.editors) do
+        if vim.api.nvim_win_is_valid(w) then
+            local b = vim.api.nvim_win_get_buf(w)
             local name = vim.api.nvim_buf_get_name(b)
             if name:match("Editor_%d.sql") then
                 win = w
@@ -256,8 +257,24 @@ local function createTableStatement(type, tbl, schema, database, db, dbms)
         end
     end
     if not win or not buf then
-        createEditor(UI.windows.editors[1])
-        return
+        if #UI.windows.editors == 0 then
+            recreateEditor()
+            -- Get the newly created window (added to end of list)
+            win = UI.windows.editors[#UI.windows.editors]
+        else
+            -- Use the first available editor window if valid
+            local target_win = UI.windows.editors[1]
+            if vim.api.nvim_win_is_valid(target_win) then
+                createEditor(target_win)
+                win = target_win
+            else
+                -- Fallback if the window reference is stale
+                recreateEditor()
+                win = UI.windows.editors[#UI.windows.editors]
+            end
+        end
+        -- The buffer is the last one added to editors list
+        buf = UI.buffers.editors[#UI.buffers.editors]
     end
     vim.api.nvim_set_current_win(win)
     vim.api.nvim_win_set_buf(win, buf)
