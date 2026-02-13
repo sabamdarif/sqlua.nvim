@@ -19,7 +19,9 @@ Currently supported DBMS:
 {
     'xemptuous/sqlua.nvim',
     lazy = true,
-    cmd = 'SQLua',
+    cmd = { 'SQLua', 'SQLuaOpen' },
+    -- Load the plugin when opening database files
+    event = { 'BufEnter *.db', 'BufEnter *.sqlite', 'BufEnter *.sqlite3', 'BufEnter *.s3db' },
     config = function() require('sqlua').setup() end
 }
 ```
@@ -127,6 +129,10 @@ You can override the default settings by feeding the table as a table to the set
     -- whether to introspect the database on SQLua open or when first expanded
     -- through the sidebar
     load_connections_on_start = false,
+    -- automatically open the SQLua UI when a database file is opened
+    auto_open_db_files = true,
+    -- file extensions recognized as database files (triggers auto-open)
+    db_file_extensions = { "db", "sqlite", "sqlite3", "s3db" },
     keybinds = {
         execute_query = "<leader>r",
         activate_db = "<C-a>",
@@ -142,6 +148,26 @@ You can override the default settings by feeding the table as a table to the set
 Open SQLua with the command `:SQLua`
 
 Edit connections with `:SQLuaEdit`
+
+### Auto-Open Database Files
+
+Simply open a database file in Neovim and SQLua will handle the rest:
+```
+nvim mydata.db
+nvim /path/to/database.sqlite3
+```
+
+For SQLite files (`.db`, `.sqlite`, `.sqlite3`, `.s3db`), the database is opened automatically — no prompts needed.
+
+For other file types, you'll be asked to select the database type and enter connection details.
+
+You can also use the `:SQLuaOpen` command:
+```
+:SQLuaOpen /path/to/file.db
+:SQLuaOpen               " prompts for file path
+```
+
+To disable auto-open, set `auto_open_db_files = false` in your config.
 
 ### Executing Queries
 Queries run in the editor buffers will use the currently active db, which will be highlighted on the sidebar. The desired connection

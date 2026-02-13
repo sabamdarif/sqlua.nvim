@@ -1,6 +1,7 @@
 local utils = require("sqlua.utils")
 local Connection = require("sqlua.connection")
 local UI = require("sqlua.ui")
+local dbfile = require("sqlua.dbfile")
 
 local M = {}
 
@@ -16,6 +17,8 @@ DEFAULT_CONFIG = {
     default_limit = 200,
     load_connections_on_start = false,
     syntax_highlighting = false,
+    auto_open_db_files = true,
+    db_file_extensions = { "db", "sqlite", "sqlite3", "s3db" },
     keybinds = {
         execute_query = "<leader>r",
         activate_db = "<C-a>",
@@ -72,6 +75,18 @@ M.setup = function(opts)
         UI:refreshSidebar()
         if UI.num_dbs > 0 then vim.api.nvim_win_set_cursor(UI.windows.sidebar, { 2, 2 }) end
     end, {})
+
+    -- SQLuaOpen command: open a database file with interactive prompts
+    vim.api.nvim_create_user_command("SQLuaOpen", function(args)
+        local filepath = args.args
+        if filepath == "" then
+            filepath = vim.fn.input("Enter path to database file: ", "", "file")
+        end
+        if filepath and filepath ~= "" then
+            filepath = vim.fn.fnamemodify(filepath, ":p")
+            dbfile.prompt_and_open(filepath, config)
+        end
+    end, { nargs = "?", complete = "file", bang = true })
 end
 
 return M
